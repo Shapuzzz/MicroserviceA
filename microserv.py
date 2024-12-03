@@ -1,38 +1,43 @@
 import zmq
-import json
 
 # Message log
 message_log = []
 
-# Function to handle operations
 def handle_request(request):
     global message_log
 
-    if "clear_message_log" in request and request["clear_message_log"]:
-        message_log.clear()
-        return {"status": "success", "message": "Message log cleared", "data": message_log}
+    # a list with a JSON object
+    if isinstance(request, list) and len(request) > 0:
+        operation = request[0] 
 
-    elif "delete_message_id" in request and request["delete_message_id"]:
-        message_id = request["message_id"]
-        message_log = [msg for msg in message_log if msg.get("id") != message_id]
-        return {"status": "success", "message": f"Message with ID {message_id} deleted", "data": message_log}
+        # clearing the message log
+        if "clear_message_log" in operation and operation["clear_message_log"]:
+            message_log.clear()
+            return message_log
 
-    elif "edit_message_id" in request and request["edit_message_id"]:
-        message_id = request["message_id"]
-        updated_message = request["updated_message"]
-        for msg in message_log:
-            if msg.get("id") == message_id:
-                msg.update(updated_message)
-                return {"status": "success", "message": f"Message with ID {message_id} updated", "data": message_log}
-        return {"status": "error", "message": "Message ID not found"}
+        # deleting a specific message by ID
+        elif "delete_message_id" in operation and operation["delete_message_id"]:
+            message_id = operation.get("message_id")
+            message_log = [msg for msg in message_log if msg.get("id") != message_id]
+            return message_log
 
-    elif "key1" in request:
-        # Add a new message to the log
-        message_log.append(request)
-        return {"status": "success", "message": "Message added", "data": message_log}
+        # editing a specific message by ID
+        elif "edit_message_id" in operation and operation["edit_message_id"]:
+            message_id = operation.get("message_id")
+            updated_message = operation.get("updated_message")
+            for msg in message_log:
+                if msg.get("id") == message_id:
+                    msg.update(updated_message)
+                    return message_log
+            return [{'Error': 'Could not load messages'}]
 
-    else:
-        return {"status": "error", "message": "Invalid request"}
+        # add the message to the log
+        else:
+            message_log.append(operation)
+            return message_log
+
+    # invalid request 
+    return [{'Error': 'Could not load messages'}]
 
 # ZeroMQ server setup
 def main():
@@ -41,7 +46,6 @@ def main():
     socket = context.socket(zmq.REP)
     socket.bind("tcp://*:5555")  # Bind to port 5555
     print("Microservice is running...")
-
 
     while True:
         # Receive request
