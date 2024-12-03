@@ -1,4 +1,5 @@
 import zmq
+import json
 
 # Message log
 message_log = []
