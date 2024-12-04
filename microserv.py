@@ -18,14 +18,14 @@ def handle_request(request):
 
         # deleting a specific message by ID
         elif "delete_message_id" in operation and operation["delete_message_id"]:
-            message_id = operation.get("message_id")
+            message_id = request[1]
             message_log = [msg for msg in message_log if msg.get("id") != message_id]
             return message_log
 
         # editing a specific message by ID
         elif "edit_message_id" in operation and operation["edit_message_id"]:
-            message_id = operation.get("message_id")
-            updated_message = operation.get("updated_message")
+            message_id = request[1]
+            updated_message = request[2]
             for msg in message_log:
                 if msg.get("id") == message_id:
                     msg.update(updated_message)
